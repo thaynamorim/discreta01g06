@@ -31,7 +31,7 @@ float arctan(float x1, float y1, float x2, float y2)
     return a; // QUAD = 1
 
 }
-
+/*
 lista *buscar(lista *cabeca, int x)
 {
     lista *pl = cabeca;
@@ -106,4 +106,4 @@ void imprimir(lista *cabeca)
     }
     printf("NULL\n");
     return;
-}
+}*/

@@ -1,6 +1,6 @@
 float arctan(float x1, float y1, float x2, float y2);
-lista *buscar(lista *cabeca, int x);
-void inserir(lista **cabeca, int x);
-void remover(lista **cabeca, lista *r);
-lista *anterior(lista *cabeca, lista *r);
+//lista *buscar(lista *cabeca, int x);
+//void inserir(lista **cabeca, int x);
+//void remover(lista **cabeca, lista *r);
+//lista *anterior(lista *cabeca, lista *r);
 
