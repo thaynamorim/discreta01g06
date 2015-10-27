@@ -5,7 +5,6 @@
 #define CORVERDE (makecol(0, 255, 0))
 #define CORAMARELO (makecol(255,255,100))
 #define CORVERMELHO (makecol(255, 0, 0))
-#define PI 3.141592653589793238462643383279502884
 #define IMAGENAME "teste.bmp" /* nome do arquivo de imagem */
 
 #include <stdio.h>
@@ -22,7 +21,7 @@ void transicao(int qo, int qf,BITMAP *buff,int k);
 void desenhaauto(int k);
 int main(void)
 {
-    int k=2;
+    int k=5;
     desenhaauto(k);
     return EXIT_SUCCESS;
 }
@@ -45,8 +44,11 @@ void desenhaauto(int k)
         exit(EXIT_FAILURE);
     }
     estados(k,buff);
-    transicao(1,2,buff,k);
-    transicao(2,1,buff,k);
+    int i, j;
+    for(i=0;i<k;i++)
+        for(j=0;j<k;j++)
+            if(i==j+1||j==i+1)
+                transicao(i,j,buff,k);
     save_bitmap(IMAGENAME, buff, pal);
     destroy_bitmap(buff);
     allegro_exit();
@@ -59,12 +61,13 @@ void desenhaauto(int k)
 void estados(int k,BITMAP *buff)
 {
     int i;
-    float rk,xi,yi;
-    rk=(Ytela / 2) * (M_PI / (M_PI+k));
+    float rk,xi,yi,rc;
+    rk=(Ytela / 4) * (M_PI/(M_PI+k));
+    rc = yc - rk;
     for(i=0;i<k;i++)
     {
-        yi=yc+cos((2*M_PI/k)*i);
-        xi=xc+sin((2*M_PI/k)*i);
+        yi=yc+rc*cos((2*M_PI/k)*i);
+        xi=xc+rc*sin((2*M_PI/k)*i);
         circle(buff, xi, yi, rk, CORBRANCO);
     }
     return;
@@ -72,17 +75,19 @@ void estados(int k,BITMAP *buff)
 
 void transicao(int qo,int qf,BITMAP *buff,int k)
 {
-    float delta, alfa, beta, phi, x1, y1, x2, y2, x3, y3, xo, yo, xf, yf, rk, xt1, yt1, xt2, yt2;
-    int  d=1;
-    y1=yc + cos(2 * PI / k) * qo;
-    x1=xc + sin(2 * PI / k) * qo;
-    y3=xc + sin(2 * PI / k) * qf;
-    x3=xc + sin(2 * PI / k) * qf;
-    rk=(Ytela / 2) * (PI / (PI+k));
+    float delta, alfa, beta, phi, x1, y1, x2, y2, x3, y3, xo, yo, xf, yf, rk, xt1, yt1, xt2, yt2, rc;
+
+    rk=(Ytela / 4) * (M_PI / (M_PI+k));
+    rc = yc - rk;
+
+    y1 = yc + rc*cos((2*M_PI/k)*qo);
+    x1 = xc + rc*sin((2*M_PI/k)*qo);
+    y3 = yc + rc*cos((2*M_PI/k)*qf);
+    x3 = xc + rc*sin((2*M_PI/k)*qf);
 
     alfa=arctan(x1,y1,x3,y3);
     y2=(y3+y1)/2 + rk * cos(alfa);
-    x2=(x3+x1)/2 + rk * sin(alfa);
+    x2=(x3+x1)/2 - rk * sin(alfa);
 
     beta=arctan(x3,y3,x2,y2);
     phi=arctan(x1,y1,x2,y2);
@@ -91,16 +96,16 @@ void transicao(int qo,int qf,BITMAP *buff,int k)
     xf = x3 + rk * cos(beta);
     yf = y3 + rk * sin(beta);
 
-    line(buff, x1, y1, xo, yo, CORBRANCO);
-    line(buff, xo, yo, x3, y3, CORBRANCO);
+    line(buff, xo, yo, x2, y2, CORBRANCO);
+    line(buff, x2, y2, xf, yf, CORBRANCO);
 
     delta=arctan(x2,y2,xf,yf);
-    xt2 = xf - d*(sin(delta) + cos(delta));
-    yt2 = yf + d*(sin(delta) - cos(delta));
+    xt2 = xf - (rk / 4) * (sin(delta) + cos(delta));
+    yt2 = yf + (rk / 4) * (sin(delta) - cos(delta));
     xt1 = xf + (rk / 4) * (sin(delta) - cos(delta));
     yt1 = yf - (rk / 4) * (sin(delta) + cos(delta));
 
-    triangle(buff, xt1, yt1, xt2, yt2, x3, y3, CORBRANCO);
+    triangle(buff, xt1, yt1, xt2, yt2, xf, yf, CORBRANCO);
 
     return;
 }
