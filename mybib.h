@@ -4,8 +4,3 @@ void inserir(lista **cabeca, int x);
 void remover(lista **cabeca, lista *r);
 lista *anterior(lista *cabeca, lista *r);
 
-typedef struct st_lista
-{
-    int c;
-    struct st_lista *prox;
-}lista;

@@ -1,3 +1,9 @@
+typedef struct st_lista
+{
+    int c;
+    struct st_lista *prox;
+}lista;
+
 float arctan(float x1, float y1, float x2, float y2)
 {
     if(x2 == x1)
