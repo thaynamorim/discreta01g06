@@ -13,7 +13,7 @@ float arctan(float x1, float y1, float x2, float y2)
     if(x2 == x1)
     {
         if(y2 == y1)
-            return 9;
+            return 9.0;
         else
             if(y2>y1)
                 return M_PI/2.0;

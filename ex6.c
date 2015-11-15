@@ -16,15 +16,18 @@
 #define xc Xtela/2.0
 #define yc Ytela/2.0
 
-void estados(int k,BITMAP *buff);
-void transicao(int qo, int qf,BITMAP *buff,int k);
+void iniestado(int k, BITMAP *buff, int n);
+void estados(int k,BITMAP *buff, int *final);
+void transicao(int qo, int qf,BITMAP *buff,int k, char c);
 void desenhaauto(int k);
+
 int main(void)
 {
     int k=5;
     desenhaauto(k);
     return EXIT_SUCCESS;
 }
+
 void desenhaauto(int k)
 {
 
@@ -43,12 +46,16 @@ void desenhaauto(int k)
         printf("Could not create buffer!\n");
         exit(EXIT_FAILURE);
     }
-    estados(k,buff);
-    int i, j;
-    for(i=0;i<k;i++)
-        for(j=0;j<k;j++)
-            if(i==j+1||j==i+1)
-                transicao(i,j,buff,k);
+    int f[500] = {0};
+    f[0] = f[3] = f[4] = 1;
+    estados(k,buff,f);
+    iniestado(k,buff,0);
+    transicao(0,1,buff,k,'a');
+    transicao(1,2,buff,k,'a');
+    transicao(1,3,buff,k,'b');
+    transicao(2,4,buff,k,'b');
+    transicao(3,1,buff,k,'a');
+    transicao(4,1,buff,k,'a');
     save_bitmap(IMAGENAME, buff, pal);
     destroy_bitmap(buff);
     allegro_exit();
@@ -58,7 +65,7 @@ void desenhaauto(int k)
     return;
 }
 
-void estados(int k,BITMAP *buff)
+void estados(int k,BITMAP *buff, int *final)
 {
     int i;
     float rk,xi,yi,rc;
@@ -69,14 +76,17 @@ void estados(int k,BITMAP *buff)
         yi=yc+rc*cos((2*M_PI/k)*i);
         xi=xc+rc*sin((2*M_PI/k)*i);
         circle(buff, xi, yi, rk, CORBRANCO);
+        if(*final == 1)
+            circle(buff, xi, yi, rk*0.8, CORBRANCO);
+        textprintf_ex(buff, font, xi, yi, CORVERDE, CORPRETO, "q%d",i);
+        final++;
     }
     return;
 }
 
-void transicao(int qo,int qf,BITMAP *buff,int k)
+void transicao(int qo,int qf,BITMAP *buff,int k, char c)
 {
     float delta, alfa, beta, phi, x1, y1, x2, y2, x3, y3, xo, yo, xf, yf, rk, xt1, yt1, xt2, yt2, rc;
-
     rk=(Ytela / 4) * (M_PI / (M_PI+k));
     rc = yc - rk;
 
@@ -89,23 +99,88 @@ void transicao(int qo,int qf,BITMAP *buff,int k)
     y2=(y3+y1)/2 + rk * cos(alfa);
     x2=(x3+x1)/2 - rk * sin(alfa);
 
-    beta=arctan(x3,y3,x2,y2);
-    phi=arctan(x1,y1,x2,y2);
-    xo = x1 + rk * cos(phi);
-    yo = y1 + rk * sin(phi);
-    xf = x3 + rk * cos(beta);
-    yf = y3 + rk * sin(beta);
+    if(((alfa >= 0) && (alfa <= M_PI/2)) || ((alfa >= M_PI) && (alfa <= 3*M_PI/2)))
+    {
+        beta=arctan(x3,y3,x2,y2);
+        phi=arctan(x1,y1,x2,y2);
+        xo = x1 + rk * cos(phi);
+        yo = y1 + rk * sin(phi);
+        xf = x3 + rk * cos(beta);
+        yf = y3 + rk * sin(beta);
+    }
+    else
+    {
+        alfa=arctan(x3,y3,x1,y1);
+        y2=(y3+y1)/2 + rk * cos(alfa);
+        x2=(x3+x1)/2 - rk * sin(alfa);
+        beta=arctan(x1,y1,x2,y2);
+        phi=arctan(x3,y3,x2,y2);
+        xo = x1 - rk * cos(phi);
+        yo = y1 - rk * sin(phi);
+        xf = x3 - rk * cos(beta);
+        yf = y3 - rk * sin(beta);
+    }
 
-    line(buff, xo, yo, x2, y2, CORBRANCO);
-    line(buff, x2, y2, xf, yf, CORBRANCO);
+    int coo[8];
+    coo[0] = (int)xo;
+    coo[1] = (int)yo;
+    coo[2] = (int)x2;
+    coo[3] = (int)y2;
+    coo[4] = (int)x2;
+    coo[5] = (int)y2;
+    coo[6] = (int)xf;
+    coo[7] = (int)yf;
+    spline(buff,coo,CORBRANCO);
 
-    delta=arctan(x2,y2,xf,yf);
+    delta=arctan(x2,y2,x3,y3);
     xt2 = xf - (rk / 4) * (sin(delta) + cos(delta));
     yt2 = yf + (rk / 4) * (sin(delta) - cos(delta));
     xt1 = xf + (rk / 4) * (sin(delta) - cos(delta));
     yt1 = yf - (rk / 4) * (sin(delta) + cos(delta));
 
     triangle(buff, xt1, yt1, xt2, yt2, xf, yf, CORBRANCO);
+    textprintf_ex(buff, font, x2, y2, CORVERDE, CORPRETO, "%c", c);
 
+    return;
+}
+
+void iniestado(int k, BITMAP *buff, int n)
+{
+    float ang, x1, y1, x2, y2, x3, y3, rc, rk, xt1, xt2, yt1, yt2;
+    if(n>=k)
+    {
+        printf("Erro: estado inicial maior que o numero de estados.\n");
+        exit(1);
+    }
+    ang = M_PI*(2.0*n)/(1.0*k);
+
+    rk=(Ytela / 4) * (M_PI / (M_PI+k));
+    rc = yc - rk;
+    y3 = yc + rc*cos((2*M_PI/k)*n) - rk*sin(ang);
+    x3 = xc + rc*sin((2*M_PI/k)*n) - rk*cos(ang);
+
+    x1 = x3 - rk*cos(ang)+rand()%10;
+    y1 = y3 - rk*sin(ang)+rand()%10;
+
+    x2 = (x1+x3)/2+rand()%10;
+    y2 = (y1+y3)/2+rand()%10;
+
+    int i[8];
+    i[0] = x1;
+    i[1] = y1;
+    i[2] = x2;
+    i[3] = y2;
+    i[4] = x2;
+    i[5] = y2;
+    i[6] = x3;
+    i[7] = y3;
+    spline(buff,i,CORBRANCO);
+
+    xt2 = x2;
+    yt2 = y2 + (rk/5)*cos(ang);
+    xt1 = x2;
+    yt1 = y2 - (rk/5)*cos(ang);
+
+    triangle(buff, xt1, yt1, xt2, yt2, x3, y3, CORBRANCO);
     return;
 }
