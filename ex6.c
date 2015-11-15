@@ -20,7 +20,9 @@ void iniestado(int k, BITMAP *buff, int n);
 void estados(int k,BITMAP *buff, int *final);
 void transicao(int qo, int qf,BITMAP *buff,int k, char c);
 void desenhaauto(int k);
-
+//void desenhaauto(automato a);
+//typedef struct blablabla
+//{ ... int k;}automato;
 int main(void)
 {
     int k=5;
@@ -30,6 +32,7 @@ int main(void)
 
 void desenhaauto(int k)
 {
+    //k = numero de estados. No nosso exemplo, k = 5
 
     BITMAP *buff;
     PALETTE pal;
@@ -46,11 +49,22 @@ void desenhaauto(int k)
         printf("Could not create buffer!\n");
         exit(EXIT_FAILURE);
     }
-    int f[500] = {0};
-    f[0] = f[3] = f[4] = 1;
+    int f[500] = {0}; //nao vai existir
+    //vetor f: vetor de zeros, onde so eh um nos estados que forem finais
+    //    f = {1 0 0 1 1}
+    //estados  0 1 2 3 4 -> estados 0, 3 e 4 finais
+    f[0] = f[3] = f[4] = 1; //isso sera lido pelo scanf e armazenado na lista automato
+    //variavel k sera tirada do scanf: linha 1
     estados(k,buff,f);
-    iniestado(k,buff,0);
+    iniestado(k,buff,0); //estado inicial sera tirado do scanf: linha 3
     transicao(0,1,buff,k,'a');
+    //scanf("%d %d %d",i,v,f);
+    //transicao(i,f,buff,k,v);
+    //0 'a' 1 -> 0 1 'a'
+    //dica pra converter numero em letra: valor + 'a': 0+'a' = 'a', 1+'a' = 'b' etc...
+    //transicao(estado inicial, estado final, buff, numero de estados, letra do alfabeto)
+    //linha 2: numero de letras do alfabeto: a até ...
+    //simbolo lido: 0 representa a, 1 representa b, 2 representa c etc...
     transicao(1,2,buff,k,'a');
     transicao(1,3,buff,k,'b');
     transicao(2,4,buff,k,'b');
