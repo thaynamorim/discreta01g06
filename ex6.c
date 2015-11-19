@@ -1,3 +1,30 @@
+/***************************************************************************
+ *   ex6.c version 1.0                                                     *
+ *                                                                         *
+ *   Desenha um automato, dada uma quintupla                               *
+ *   Copyright (C) 2015 by Hugo Fonseca, Thayna Morim and Mateus Lenier    *
+ ***************************************************************************
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************
+ *   To contact the authors, please write to:                              *
+ *   Hugo de Albuquerque Fonseca <hugoalbuquerque0@gmail.com>              *
+ *   Mateus Lenier Rezende <mateuslenier@gmail.com>                        *
+ *   Thayna Morim de Barros Barreto <tmorimbarreto@gmail.com>              *
+ *   Webpage: www.upe.br                                                   *
+ **************************************************************************/
 #define CORBRANCO (makecol(255,255,255))
 #define CORPRETO 1
 #define CORCINZA (makecol(160,160,160))
@@ -17,10 +44,6 @@
 #define yc Ytela/2.0
 #define FNAME "automato1.txt"
 #define KMAX 1000
-void iniestado(int k, BITMAP *buff, int n);
-void estados(int k,BITMAP *buff, int *final);
-void transicao(int qo, int qf,BITMAP *buff,int k, char c);
-void desenhaauto(automato a);
 
 typedef struct st_fim
 {
@@ -41,11 +64,22 @@ typedef struct st_automato
     transicao trans;
 }automato;
 
+void iniestado(int k, BITMAP *buff, int n);
+void estados(int k,BITMAP *buff, int *final);
+void faz_transicao(int qo, int qf,BITMAP *buff,int k, char c);
+void desenhaauto(automato a);
+void inserirfim(fim **cabeca,int c);
+void inserirtrans(transicao **cabeca,int a,int b, int c);
+
 int main(void)
 {
     int x, y, z;
     FILE *fl= fopen(FNAME,"r+");
+    fim *pf = NULL;
+    transicao *pt = NULL;
     automato a;
+    a.trans.prox = NULL;
+    a.lfim.prox = NULL;
     char c;
     fscanf(fl,"%d",&(a.k));
     fscanf(fl,"%d",&(a.alf));
@@ -55,19 +89,22 @@ int main(void)
         c = fgetc(fl);
         if(feof(fl) || c == '\n')
             break;
-        inserirfim(&(a.lfim),(int)(c - '0'));
+        pf = &(a.lfim);
+        inserirfim(&pf,(int)(c - '0'));
     }
     while(1)
     {
         if(feof(fl))
             break;
         fscanf(fl,"%d %d %d",&x, &y, &z);
-        inserirtrans(&(a.trans),x,y,z);
+        pt = &(a.trans);
+        inserirtrans(&pt,x,y,z);
     }
     desenhaauto(a);
     fclose(fl);
     return EXIT_SUCCESS;
 }
+
 void inserirfim(fim **cabeca,int c)
 {
     fim *pl = *cabeca;
@@ -130,9 +167,9 @@ void desenhaauto(automato a)
         exit(EXIT_FAILURE);
     }
     int f[KMAX] = {0},i=0;
-    fim *pl = a.lfim;
-    transicao *pt = a.trans;
-    while(*pl != NULL)
+    fim *pl = &(a.lfim);
+    transicao *pt = &(a.trans);
+    while(pl != NULL)
     {
         f[i]=1;
         i++;
@@ -140,7 +177,7 @@ void desenhaauto(automato a)
     }
     estados(a.k,buff,f);
     iniestado(a.k,buff,a.si); //estado inicial sera tirado do scanf: linha 3
-    while(*pt != NULL)
+    while(pt != NULL)
     {
         faz_transicao(pt->de,pt->para,buff,a.k,pt->meio + 'a');
         pt=pt->prox;
@@ -173,7 +210,7 @@ void estados(int k,BITMAP *buff, int *final)
     return;
 }
 
-void transicao(int qo,int qf,BITMAP *buff,int k, char c)
+void faz_transicao(int qo,int qf,BITMAP *buff,int k, char c)
 {
     float delta, alfa, beta, phi, x1, y1, x2, y2, x3, y3, xo, yo, xf, yf, rk, xt1, yt1, xt2, yt2, rc;
     rk=(Ytela / 4) * (M_PI / (M_PI+k));
