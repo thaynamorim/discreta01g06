@@ -15,22 +15,102 @@
 #define Xtela 800
 #define xc Xtela/2.0
 #define yc Ytela/2.0
-
+#define FNAME "automato1.txt"
+#define KMAX 1000
 void iniestado(int k, BITMAP *buff, int n);
 void estados(int k,BITMAP *buff, int *final);
 void transicao(int qo, int qf,BITMAP *buff,int k, char c);
-void desenhaauto(int k);
-//void desenhaauto(automato a);
-//typedef struct blablabla
-//{ ... int k;}automato;
+void desenhaauto(automato a);
+
+typedef struct st_fim
+{
+    int tf;
+    struct st_fim *prox;
+}fim;
+
+typedef struct st_transicao
+{
+    int de,meio,para;
+    struct st_transicao *prox;
+}transicao;
+
+typedef struct st_automato
+{ 
+    int k, alf, si;
+    fim lfim;
+    transicao trans;
+}automato;
+
 int main(void)
 {
-    int k=5;
-    desenhaauto(k);
+    int x, y, z;
+    FILE *fl= fopen(FNAME,"r+");
+    automato a;
+    char c;
+    fscanf(fl,"%d",&(a.k));
+    fscanf(fl,"%d",&(a.alf));
+    fscanf(fl,"%d",&(a.si));
+    while(1) 
+    {
+        c = fgetc(fl);
+        if(feof(fl) || c == '\n')
+            break;
+        inserirfim(&(a.lfim),(int)(c - '0'));
+    }
+    while(1)
+    {
+        if(feof(fl))
+            break;
+        fscanf(fl,"%d %d %d",&x, &y, &z);
+        inserirtrans(&(a.trans),x,y,z);
+    }
+    desenhaauto(a);
+    fclose(fl);
     return EXIT_SUCCESS;
 }
+void inserirfim(fim **cabeca,int c)
+{
+    fim *pl = *cabeca;
+    fim *plant = NULL;
+    while(pl != NULL)
+    {
+        plant = pl;
+        pl = pl->prox;
+    }
+    pl = malloc(sizeof(fim));
+    pl->tf = c;
+    pl->prox = NULL;
+    if(plant != NULL)
+        plant->prox = pl;
+    else
+        *cabeca = pl;
+    
+    return;
+}
 
-void desenhaauto(int k)
+void inserirtrans(transicao **cabeca,int a,int b, int c)
+{
+    transicao *pl = *cabeca;
+    transicao *plant = NULL;
+    while(pl != NULL)
+    {
+        plant = pl;
+        pl = pl->prox;
+    }
+    pl = malloc(sizeof(transicao));
+    pl->de = a;
+    pl->meio = b;
+    pl->para = c;
+    pl->prox = NULL;
+    if(plant != NULL)
+        plant->prox = pl;
+    else
+        *cabeca = pl;
+    
+    return;
+}
+
+void desenhaauto(automato a)
 {
     //k = numero de estados. No nosso exemplo, k = 5
 
@@ -49,27 +129,22 @@ void desenhaauto(int k)
         printf("Could not create buffer!\n");
         exit(EXIT_FAILURE);
     }
-    int f[500] = {0}; //nao vai existir
-    //vetor f: vetor de zeros, onde so eh um nos estados que forem finais
-    //    f = {1 0 0 1 1}
-    //estados  0 1 2 3 4 -> estados 0, 3 e 4 finais
-    f[0] = f[3] = f[4] = 1; //isso sera lido pelo scanf e armazenado na lista automato
-    //variavel k sera tirada do scanf: linha 1
-    estados(k,buff,f);
-    iniestado(k,buff,0); //estado inicial sera tirado do scanf: linha 3
-    transicao(0,1,buff,k,'a');
-    //scanf("%d %d %d",i,v,f);
-    //transicao(i,f,buff,k,v);
-    //0 'a' 1 -> 0 1 'a'
-    //dica pra converter numero em letra: valor + 'a': 0+'a' = 'a', 1+'a' = 'b' etc...
-    //transicao(estado inicial, estado final, buff, numero de estados, letra do alfabeto)
-    //linha 2: numero de letras do alfabeto: a até ...
-    //simbolo lido: 0 representa a, 1 representa b, 2 representa c etc...
-    transicao(1,2,buff,k,'a');
-    transicao(1,3,buff,k,'b');
-    transicao(2,4,buff,k,'b');
-    transicao(3,1,buff,k,'a');
-    transicao(4,1,buff,k,'a');
+    int f[KMAX] = {0},i=0;
+    fim *pl = a.lfim;
+    transicao *pt = a.trans;
+    while(*pl != NULL)
+    {
+        f[i]=1;
+        i++;
+        pl=pl->prox;
+    }
+    estados(a.k,buff,f);
+    iniestado(a.k,buff,a.si); //estado inicial sera tirado do scanf: linha 3
+    while(*pt != NULL)
+    {
+        faz_transicao(pt->de,pt->para,buff,a.k,pt->meio + 'a');
+        pt=pt->prox;
+    }
     save_bitmap(IMAGENAME, buff, pal);
     destroy_bitmap(buff);
     allegro_exit();
